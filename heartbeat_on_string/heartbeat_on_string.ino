@@ -11,6 +11,8 @@
  
 unsigned long previous_state_change_ts = 0;
 const int kInterval = 15000;
+const int kBeatSize = 2;
+const int kRepeatEveryNPixels = 15; // Should be evenly divisible by LED_COUNT
 
 #define PIN 6  //Which pin the pixels are connected to
 #define LED_COUNT 150  //Number of pixels used
@@ -64,7 +66,7 @@ void loop()  {
 }
 
 void AnimateString(uint8_t color_rgb[3], int frame[6]) {
-    UpdatePixels( color_rgb[0],color_rgb[1],color_rgb[2] );
+    UpdatePixels( color_rgb[0],color_rgb[1],color_rgb[2], kBeatSize, kRepeatEveryNPixels );
     PixelString.show();                      
     PixelString.setBrightness(frame[BeatSection::Brightness]); 
     delay(frame[BeatSection::Main]);
@@ -73,7 +75,7 @@ void AnimateString(uint8_t color_rgb[3], int frame[6]) {
     PixelString.show();                      
     delay(frame[BeatSection::Dip]);
 
-    UpdatePixels( color_rgb[0],color_rgb[1],color_rgb[2] );
+    UpdatePixels( color_rgb[0],color_rgb[1],color_rgb[2], kBeatSize, kRepeatEveryNPixels );
     PixelString.show();    
     delay(frame[BeatSection::Secondary]);
 
@@ -82,9 +84,17 @@ void AnimateString(uint8_t color_rgb[3], int frame[6]) {
     delay(frame[BeatSection::End]);
 }
 
-void UpdatePixels(uint8_t r, uint8_t g, uint8_t b ) {
-  for (int i = 0; i < LED_COUNT; i++) {
-    PixelString.setPixelColor(i, r, g, b);
+void UpdatePixels(uint8_t r, uint8_t g, uint8_t b, int leds, int repeat_every_n_pixels ) {
+  int count = LED_COUNT/repeat_every_n_pixels;
+  // For count times: light n'leds' and then clear 'repeat_every_n_pixels - leds'
+  
+  for (int i = 0; i < count; i++) {
+
+    for (int j = 0; j < leds; j++)
+      PixelString.setPixelColor(j + (i* repeat_every_n_pixels), r, g, b);
+
+    for (int c = leds; c < repeat_every_n_pixels; c++)
+      PixelString.setPixelColor(c + (i* repeat_every_n_pixels), 0,0,0);    
   }
 }
 
